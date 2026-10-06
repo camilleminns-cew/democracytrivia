@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ballots &amp; Kilowatts Trivia — Clean Energy Works</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1e415b; font-family: 'Lato', sans-serif; color: #f4f1ef; min-height: 100vh; padding: 2rem 1rem; }
+  .trivia-wrap { max-width: 640px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 1.5rem; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #f8c037; margin-bottom: 4px; }
+  .header p { font-size: 13px; color: #8badc4; }
+  .frame { background: #102231; border: 1px solid rgba(248,192,55,0.25); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 14px; line-height: 1.6; color: #b0c8d8; }
+  .frame strong { color: #f8c037; }
+  .score-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; position: sticky; top: 0; background: #1e415b; padding: 8px 0; z-index: 2; }
+  .score-pill { background: #102231; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 700; color: #f8c037; min-width: 64px; text-align: center; }
+  .progress { flex: 1; height: 6px; background: #102231; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #3f88c5; border-radius: 3px; transition: width 0.4s ease; }
+  .round { font-size: 12px; font-weight: 700; color: #f8c037; text-transform: uppercase; letter-spacing: 1.5px; margin: 1.75rem 0 0.75rem; padding-bottom: 6px; border-bottom: 1px solid rgba(248,192,55,0.25); }
+  .round span { display: block; font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; color: #8badc4; margin-top: 4px; }
+  .q-card { background: #102231; border: 1px solid rgba(63,136,197,0.15); border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+  .q-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .q-num { font-size: 11px; font-weight: 700; color: #3f88c5; text-transform: uppercase; letter-spacing: 1px; }
+  .state-tag { font-size: 11px; font-weight: 700; color: #102231; background: #8badc4; border-radius: 4px; padding: 2px 8px; letter-spacing: 0.5px; }
+  .q-text { font-size: 16px; font-weight: 700; color: #f4f1ef; line-height: 1.5; margin-bottom: 16px; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt-btn { background: rgba(63,136,197,0.08); border: 1px solid rgba(63,136,197,0.2); border-radius: 8px; padding: 11px 14px; font-size: 14px; font-family: 'Lato', sans-serif; color: #f4f1ef; cursor: pointer; text-align: left; transition: all 0.15s; line-height: 1.4; }
+  .opt-btn:hover:not(.picked) { border-color: #3f88c5; background: rgba(63,136,197,0.15); }
+  .opt-btn.correct { background: rgba(248,192,55,0.12); border-color: #f8c037; color: #f8c037; }
+  .opt-btn.wrong { background: rgba(220,80,70,0.12); border-color: #c0392b; color: #e07a72; }
+  .opt-btn.reveal { background: rgba(248,192,55,0.08); border-color: #f8c037; color: #f8c037; opacity: 0.6; }
+  .opt-btn.picked { cursor: default; }
+  .explain { font-size: 13px; color: #b0c8d8; line-height: 1.65; margin-top: 14px; padding: 12px 14px; background: rgba(30,65,91,0.6); border-left: 3px solid #f8c037; border-radius: 0 8px 8px 0; display: none; }
+  .explain.show { display: block; }
+  .lever { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(139,173,196,0.3); color: #f4f1ef; }
+  .lever b { color: #f8c037; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 2px; }
+  .venue { display: inline-block; margin-top: 10px; font-size: 11px; font-weight: 700; color: #3f88c5; border: 1px solid rgba(63,136,197,0.4); border-radius: 4px; padding: 2px 8px; }
+  .src { font-size: 11px; color: #6a96b0; font-style: italic; margin-top: 8px; }
+  .results, .discuss { background: #102231; border: 1px solid rgba(248,192,55,0.3); border-radius: 10px; padding: 1.5rem; display: none; margin-top: 1.5rem; }
+  .results { text-align: center; scroll-margin-top: 64px; }
+  .results.show, .discuss.show { display: block; }
+  .results h2, .discuss h2 { font-size: 20px; color: #f8c037; margin-bottom: 4px; }
+  .results .big-score { font-size: 48px; font-weight: 700; color: #f4f1ef; margin: 12px 0; }
+  .results .subtitle { font-size: 14px; color: #8badc4; margin-bottom: 16px; }
+  .results .msg { font-size: 14px; color: #b0c8d8; line-height: 1.6; margin-bottom: 20px; }
+  .venues { text-align: left; margin: 0 0 20px; }
+  .venues h3 { font-size: 13px; color: #f8c037; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; text-align: center; }
+  .venues p { font-size: 13px; color: #8badc4; text-align: center; margin-bottom: 12px; line-height: 1.5; }
+  .v-row { display: grid; grid-template-columns: 110px 1fr 24px; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+  .v-bar { height: 10px; background: rgba(63,136,197,0.15); border-radius: 5px; overflow: hidden; }
+  .v-fill { height: 100%; background: #3f88c5; border-radius: 5px; }
+  .v-count { color: #f8c037; font-weight: 700; text-align: right; }
+  .copy-btn { background: #f8c037; color: #102231; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-family: 'Lato', sans-serif; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+  .copy-btn:hover { background: #fad06a; }
+  .copy-btn:active { transform: scale(0.97); }
+  .copied-toast { font-size: 12px; color: #f8c037; margin-top: 8px; opacity: 0; transition: opacity 0.3s; }
+  .copied-toast.show { opacity: 1; }
+  .discuss .lead { font-size: 15px; color: #f4f1ef; line-height: 1.6; margin: 10px 0 16px; font-weight: 700; }
+  .prompt { padding: 12px 14px; margin-bottom: 10px; background: rgba(30,65,91,0.6); border-left: 3px solid #3f88c5; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; color: #b0c8d8; }
+  .prompt b { color: #f4f1ef; }
+  .note { font-size: 12px; color: #6a96b0; line-height: 1.6; margin-top: 14px; }
+  .footer { text-align: center; margin-top: 2rem; font-size: 11px; color: #4a7a96; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="trivia-wrap">
+  <div class="header">
+    <h1>Ballots &amp; Kilowatts Trivia</h1>
+    <p>Clean Energy Works — RECESS 2026 + RE-AMP Annual Meeting Report Out (10.2026)</p>
+  </div>
+
+  <div class="frame">
+    Ten questions across eight states: IL, KS, OR, CA, NC, MO, VA, WA. Each one is an energy outcome that got decided somewhere: at the ballot box, in a legislature, in a courtroom, or at a utility commission. Keep that in mind as you play. <strong>We'll come back to it.</strong>
+  </div>
+
+  <div class="score-bar">
+    <span class="score-pill" id="score">0 / 10</span>
+    <div class="progress"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  </div>
+
+  <div id="questions"></div>
+
+  <div class="results" id="results">
+    <h2>Results</h2>
+    <div class="big-score" id="final-score"></div>
+    <div class="subtitle" id="final-label"></div>
+    <div class="msg" id="final-msg"></div>
+    <div class="venues">
+      <h3>Where were these decided?</h3>
+      <p>Only some of these outcomes were settled by voters directly. Every one was shaped by who won an election.</p>
+      <div id="venue-bars"></div>
+    </div>
+    <button class="copy-btn" id="copy-btn">Copy score to share</button>
+    <div class="copied-toast" id="toast">Copied to clipboard</div>
+  </div>
+
+  <div class="discuss" id="discuss">
+    <h2>Let's talk</h2>
+    <div class="lead">How much does political organizing literacy matter in our toolkit for advancing this work?</div>
+    <div class="prompt"><b>Venue literacy.</b> Look at the tally above. Most of our IUI wins happen at a commission, but commissioners in all eight of these states are appointed, not elected. Do we track governors' races and legislative seats with the same rigor we track dockets?</div>
+    <div class="prompt"><b>Margin literacy.</b> In North Carolina, two legislators supplied the exact supermajority that erased Duke's 2030 carbon target. Do we know who the swing votes are on the bills our programs depend on, and who organizes in their districts?</div>
+    <div class="prompt"><b>Ballot literacy.</b> Missouri voters banned charging customers for unbuilt power plants in 1976. Lawmakers reversed it in 2025. In 2026, Missourians are using the referendum again on a different fight. When is a ballot measure the right tool, and when is it a trap?</div>
+    <div class="prompt"><b>Our lane.</b> As a nonprofit, we can educate, testify, convene, and support nonpartisan voter engagement. We can't back candidates. Within that lane, what are we not doing yet that RECESS and RE-AMP participants told us mattered?</div>
+    <div class="note">Facilitator note: this trivia is nonpartisan civic education. Facts about candidates and votes are included to show where energy decisions get made, not to support or oppose anyone.</div>
+  </div>
+
+  <div class="footer">Sources cited per question — Clean Energy Works, October 2026<br>Polling and litigation status current as of October 6, 2026</div>
+</div>
+<script>
+const ROUNDS = {
+  0: { title: "Round 1: The ballot is a commission vote", sub: "Governors appoint the people who approve utility rates and programs." },
+  4: { title: "Round 2: Energy votes on the record", sub: "What legislatures did with utility bills, and who did it." },
+  8: { title: "Round 3: Power and democracy", sub: "Who chooses the referees, and who draws the field." }
+};
+
+const QS = [
+  {
+    state: "Illinois",
+    q: "Illinois' governor appoints the ICC, the body now writing the rules for EEUP (inclusive utility investment) and CRGA's virtual power plant tariffs. Gov. Pritzker signed CRGA in January 2026. Who is challenging him for that appointment power?",
+    opts: ["Ted Dabrowski", "Darren Bailey", "James Mendrick", "Rick Heidner"],
+    ans: 1,
+    explain: "It's a rematch. Bailey, a farmer from southern Illinois and the 2022 GOP nominee, lost to Pritzker that year 55% to 42%. If Pritzker wins, he would be the first Democratic governor in Illinois history to win a third term.",
+    lever: "The ICC is not on the ballot, but the person who appoints it is. Whoever wins shapes how EEUP, CRGA's VPP tariffs, and any POWER Act funds get implemented.",
+    venue: "Ballot box",
+    src: "Capitol News Illinois (March 2026); NBC Chicago (2026); CEJA, P.A. 102-0662 §16-111.10"
+  },
+  {
+    state: "Kansas",
+    q: "In November 2025, the Kansas Corporation Commission approved Evergy's large-load tariff for customers of 75 MW or more, with a minimum bill set at 80% of contract demand. Gov. Laura Kelly is term-limited. Which two nominees are competing to appoint the next KCC?",
+    opts: ["Scott Schwab (R) vs. Curt Skoog (D)", "Ty Masterson (R) vs. Cindy Holscher (D)", "Kris Kobach (R) vs. Cindy Holscher (D)", "Ty Masterson (R) vs. Curt Skoog (D)"],
+    ans: 1,
+    explain: "Senate President Ty Masterson won the Republican primary and state Sen. Cindy Holscher won the Democratic primary on August 4. The settlement behind Evergy's tariff included KCC staff, CURB, Google, the Data Center Coalition, Sierra Club, and NRDC. Evergy has since signed service agreements for five data center projects under it.",
+    lever: "That tariff came from a negotiated settlement, with advocates at the table. The next round of Kansas decisions, including any IUI program, goes before commissioners this governor appoints.",
+    venue: "Commission",
+    src: "Kansas Reflector; KCC order (Nov. 2025); Fox News / AP primary results (Aug. 2026); Evergy Q2 2026 earnings call"
+  },
+  {
+    state: "Oregon",
+    q: "In June 2025, Oregon lawmakers passed a bill to keep households from subsidizing data center power costs. Its nickname matches Illinois' data center bill. What is the nickname, and what is Oregon's 2026 governor's race?",
+    opts: ["The POWER Act; Kotek vs. Drazan (a 2022 rematch)", "The FAIR Grid Act; Kotek vs. Dudley", "The POWER Act; Kotek vs. Dudley", "The Ratepayer Shield Act; Kotek vs. Drazan"],
+    ans: 0,
+    explain: "Oregon's POWER Act (HB 3546) passed in June 2025 and went to Gov. Tina Kotek. She now faces Republican Christine Drazan again. Drazan lost the 2022 race by less than 4 points, and Oregon hasn't elected a Republican governor since the 1980s.",
+    lever: "Two states, one nickname. Oregon's version is already law, which makes it a live comparison for Illinois POWER Act negotiators and for RE-AMP members.",
+    venue: "Legislature",
+    src: "Oregon Capital Chronicle (June 2025); Jefferson Public Radio (June 2025); Oregon primary results (May 2026)"
+  },
+  {
+    state: "California",
+    q: "California's next governor will appoint the CPUC, which regulates utilities serving most of the state. Under the top-two primary, which climate-focused billionaire investor finished third and missed the November runoff?",
+    opts: ["Katie Porter", "Matt Mahan", "Tom Steyer", "Chad Bianco"],
+    ans: 2,
+    explain: "Xavier Becerra (D) finished first with 28.1% and Steve Hilton (R) second with 24.7%. Steyer came in third at 22.9%, roughly 166,000 votes short of the runoff.",
+    lever: "California's top-two system means party labels don't guarantee a November spot. Primary turnout decided which energy agenda made the general election ballot.",
+    venue: "Ballot box",
+    src: "Santa Monica Daily Press certified results (July 2026); CBS News (June 2026)"
+  },
+  {
+    state: "North Carolina",
+    q: "North Carolina's \"Power Bill Reduction Act\" (SB 266) became law over Gov. Josh Stein's veto in July 2025. What did it eliminate?",
+    opts: ["The state's 2050 carbon neutrality goal", "Duke Energy's interim target of a 70% carbon cut by 2030", "Net metering for rooftop solar", "Duke's residential energy efficiency programs"],
+    ans: 1,
+    explain: "SB 266 erased Duke's 2030 interim target and created a new way to charge customers for baseload plants while they're under construction. An NC State study estimated up to $23 billion in added fuel costs for ratepayers through 2050. Two Mecklenburg County Democrats voted with Republicans to supply the exact House supermajority needed. The 70% target came from HB 951, which Roy Cooper signed as governor in 2021. Cooper is now running for U.S. Senate against former RNC chair Michael Whatley; a September Elon poll had Cooper up 49% to 38% among likely voters.",
+    lever: "Two votes. A named bill that likely does the opposite of its title. Knowing who the swing legislators are, and who organizes in their districts, is energy policy work.",
+    venue: "Legislature",
+    src: "Inside Climate News / NC Newsline (July 2025); E2; Sustain Charlotte; Elon University Poll (Sept. 2026)"
+  },
+  {
+    state: "Missouri",
+    q: "When Gov. Mike Kehoe signed SB 4 in April 2025, he reversed something Missouri voters approved by ballot in 1976. What was it?",
+    opts: ["A ban on new nuclear plants", "A ban on charging customers for power plants before they're operating", "A requirement for elected utility commissioners", "A cap on residential rate increases"],
+    ans: 1,
+    explain: "Missouri voters banned \"construction work in progress\" (CWIP) charges in 1976. SB 4 brought them back for new generation and added future test years for gas and water utilities. Consumers Council of Missouri projected at least $1,115 more per year for utility customers. This November, Missourians will also vote on a referendum over the legislature's 2025 congressional map, after the Missouri Supreme Court ruled 7-0 that voters have that right.",
+    lever: "Voters won a consumer protection in 1976. Lawmakers took it back 49 years later. Ballot wins need defending in the legislature, or they don't last.",
+    venue: "Legislature",
+    src: "Energy and Policy Institute (April 2025); Columbia Missourian; Consumers Council of Missouri; Missourinet (Sept. 2026)"
+  },
+  {
+    state: "Virginia",
+    q: "Gov. Abigail Spanberger, Virginia's first woman governor, says the state's new budget includes a \"first-of-its-kind\" data center policy. What is it?",
+    opts: ["A statewide moratorium on new data centers", "A statewide tax on data centers based on how much energy they consume", "A ban on diesel backup generators", "Direct popular election of the State Corporation Commission"],
+    ans: 1,
+    explain: "Virginia created a statewide energy consumption tax on data centers. On June 30 Spanberger also signed bills to reduce heating and energy costs for low-income Virginians and to rejoin RGGI. In September her Executive Order 22 set a \"Data Center Accountability Framework\" that calls for data center energy efficiency standards.",
+    lever: "Spanberger won in November 2025. Within a year, data center cost allocation, efficiency standards, and RGGI were all moving. One election changed the state's energy agenda.",
+    venue: "Legislature",
+    src: "Office of the Governor (June–July 2026); Virginia Mercury (April 2026); WTKR (Sept. 2026)"
+  },
+  {
+    state: "Washington",
+    q: "In 2024, Washington voters approved I-2066 to block the state's shift away from natural gas, including heat pump incentives in the energy code. What happened to it on September 17, 2026?",
+    opts: ["The legislature repealed it", "Voters overturned it in a special election", "The state Supreme Court struck it down under the single-subject rule", "Puget Sound Energy agreed to follow it voluntarily"],
+    ans: 2,
+    explain: "The Washington Supreme Court ruled that I-2066 bundled too many subjects into one measure. That restores HB 1589, the 2024 law speeding Puget Sound Energy's transition off gas. Five of the court's nine seats are on the November ballot.",
+    lever: "Courts are energy venues too. Judicial races rarely get attention from energy advocates, yet five seats on this court are up this fall.",
+    venue: "Courts",
+    src: "Washington State Standard (Sept. 2026); OPB / KUOW (Sept. 2026); Ballotpedia; MyNorthwest"
+  },
+  {
+    state: "All 8 states",
+    q: "Of our eight states (IL, KS, OR, CA, NC, MO, VA, WA), how many let voters directly elect their utility commissioners?",
+    opts: ["Zero", "Two", "Four", "All eight"],
+    ans: 0,
+    explain: "None. In seven of these states the governor appoints commissioners. Virginia is the exception: its State Corporation Commission is elected by the General Assembly. For contrast, Georgia does elect its Public Service Commission, and in November 2025 Democrats Alicia Johnson and Peter Hubbard unseated two Republican incumbents after a campaign centered on power bills.",
+    lever: "In our states, voters reach utility regulators only through governors and legislators. Georgia shows what happens when energy bills become a voting issue.",
+    venue: "Commission",
+    src: "State commission statutes; Axios Atlanta (Nov. 2025); The Current GA (Nov. 2025)"
+  },
+  {
+    state: "Virginia + Missouri",
+    q: "In one of our states, voters approved a new congressional map in April 2026 and the state supreme court voided it 4-3. In another, the state supreme court ruled 7-0 that voters get to decide whether the legislature's map ever takes effect. Which states, in that order?",
+    opts: ["Missouri, then Virginia", "Virginia, then Missouri", "North Carolina, then California", "California, then Missouri"],
+    ans: 1,
+    explain: "Virginians approved a mid-decade redistricting amendment on April 21, 51.45% to 48.55%. On May 8 the Virginia Supreme Court struck it down, keeping the current map. In Missouri, the state Supreme Court ordered a referendum on HB 1 onto the November ballot, and the U.S. Supreme Court denied a stay on September 8. Missouri's 2022 map stays in place unless voters approve HB 1.",
+    lever: "District lines decide which members of Congress vote on federal energy policy, from tax credits to FERC oversight. Missouri's map fight runs through Kansas City, the heart of Evergy's territory.",
+    venue: "Courts",
+    src: "Potomac Local (April 2026); Virginia Mercury / States Newsroom (May 2026); Missouri Independent; SCOTUSblog (Sept. 2026)"
+  }
+];
+
+const TOTAL = QS.length;
+let correct = 0, answered = 0;
+const el = document.getElementById('questions');
+
+QS.forEach(function(q, qi) {
+  if (ROUNDS[qi]) {
+    const r = document.createElement('div');
+    r.className = 'round';
+    r.innerHTML = ROUNDS[qi].title + '<span>' + ROUNDS[qi].sub + '</span>';
+    el.appendChild(r);
+  }
+  const card = document.createElement('div');
+  card.className = 'q-card';
+  card.innerHTML =
+    '<div class="q-top"><div class="q-num">Question ' + (qi+1) + ' of ' + TOTAL + '</div><div class="state-tag">' + q.state + '</div></div>' +
+    '<div class="q-text">' + q.q + '</div>' +
+    '<div class="opts" id="opts-' + qi + '">' +
+    q.opts.map(function(o, oi) { return '<button class="opt-btn" data-q="' + qi + '" data-o="' + oi + '">' + o + '</button>'; }).join('') +
+    '</div>' +
+    '<div class="explain" id="exp-' + qi + '">' + q.explain +
+      '<div class="lever"><b>Organizing lens</b>' + q.lever + '</div>' +
+      '<div class="venue">Decided in: ' + q.venue + '</div>' +
+      '<div class="src">' + q.src + '</div></div>';
+  el.appendChild(card);
+});
+
+const msgs = [
+  { label: "Room for growth", msg: "Good news: you're about to hear a report out that covers all of this." },
+  { label: "Room for growth", msg: "A start. The report out will connect the dots." },
+  { label: "Getting warmer", msg: "A few right. Stick around for the context." },
+  { label: "Getting warmer", msg: "You know some of the players. The venues are where it gets interesting." },
+  { label: "Solid footing", msg: "You're tracking the races. Now let's talk about what organizers do with them." },
+  { label: "Solid footing", msg: "Halfway there. You know more than most of the rooms we testify in." },
+  { label: "Strong showing", msg: "You follow both the politics and the energy. That's the combination we're talking about today." },
+  { label: "Strong showing", msg: "You could brief a coalition call on this." },
+  { label: "Near perfect", msg: "You clearly read the dockets and the polls." },
+  { label: "Near perfect", msg: "One away. You're ready for the discussion." },
+  { label: "Perfect score", msg: "Political organizing literacy: confirmed. Now help us figure out how to spread it." }
+];
+
+function showResults() {
+  document.getElementById('final-score').textContent = correct + ' / ' + TOTAL;
+  var m = msgs[correct];
+  document.getElementById('final-label').textContent = m.label;
+  document.getElementById('final-msg').textContent = m.msg;
+  var order = ["Ballot box", "Legislature", "Courts", "Commission"];
+  var counts = {};
+  QS.forEach(function(q) { counts[q.venue] = (counts[q.venue] || 0) + 1; });
+  var max = Math.max.apply(null, order.map(function(v) { return counts[v] || 0; }));
+  document.getElementById('venue-bars').innerHTML = order.map(function(v) {
+    var n = counts[v] || 0;
+    return '<div class="v-row"><span>' + v + '</span><div class="v-bar"><div class="v-fill" style="width:' + (n/max*100) + '%"></div></div><span class="v-count">' + n + '</span></div>';
+  }).join('');
+  document.getElementById('results').classList.add('show');
+  document.getElementById('discuss').classList.add('show');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.querySelectorAll('.opt-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var qi = +this.dataset.q, oi = +this.dataset.o;
+    var opts = document.querySelectorAll('#opts-' + qi + ' .opt-btn');
+    if (opts[0].classList.contains('picked')) return;
+    opts.forEach(function(b) { b.classList.add('picked'); });
+    if (oi === QS[qi].ans) { this.classList.add('correct'); correct++; }
+    else { this.classList.add('wrong'); opts[QS[qi].ans].classList.add('reveal'); }
+    answered++;
+    document.getElementById('score').textContent = correct + ' / ' + answered;
+    document.getElementById('prog').style.width = ((answered/TOTAL)*100) + '%';
+    document.getElementById('exp-' + qi).classList.add('show');
+    if (answered === TOTAL) setTimeout(showResults, 800);
+  });
+});
+
+document.getElementById('copy-btn').addEventListener('click', function() {
+  var text = 'Ballots & Kilowatts Trivia — ' + correct + '/' + TOTAL + '\n';
+  QS.forEach(function(q, i) {
+    var opts = document.querySelectorAll('#opts-' + i + ' .opt-btn');
+    var gotIt = opts[q.ans].classList.contains('correct');
+    text += (gotIt ? '✅' : '❌') + ' Q' + (i+1) + (i < TOTAL - 1 ? ' ' : '');
+  });
+  text += '\n\nClean Energy Works — RECESS + RE-AMP Report Out';
+  navigator.clipboard.writeText(text).then(function() {
+    var toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 2000);
+  });
+});
+</script>
+</body>
+</html>
